@@ -15,6 +15,14 @@ serverOverlayIP = -1  # - s the IP address of the server that you want to connec
 msgWelcome = ''
 instructions = 'Command Line Options:\n> server –s serveroverlayIP –t serveroverlayport –o overlayport –p portno –l logfile\nWhere\n-s serveroverlayIP: This parameter is the IP address of the server that\nyou want to connect to (Optional).\n-t serveroverlayport: This parameter is the port number of the same\nserver which you want to connect to via TCP (Optional).\n-o overlayport: This parameter is the port which will be used by other\nservers to connect to you via TCP (Optional).\n-p portno: This parameter is the port number over which clients will\nconnect with you via UDP (Mandatory).\n-l logfile: Name of the log file (Mandatory).'
 namePApair = []  # name(unique), and the address ,port number pair. Form: pair<string, {#byteVersion of info#}>
+connSocket = None
+
+
+def TCPServerThread():
+    conn, addr = TCPServerSocket.accept()
+    f.write("server joined overlay from host " + addr[0] + " port " + str(addr[1]) + "\n")
+    while 1:
+        data = conn.recv(bufferSize)
 
 
 # populating myopts with paris of option and argument
@@ -54,6 +62,16 @@ f.write("server started on " + localIP + " at port " + str(localPort) + "\n")
 
 # initializing TCP socket
 # TCP can't connect and bind at the same time
+TCPServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+TCPClientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+if overlayPort != -1:
+    TCPServerSocket.bind((localIP, int(overlayPort)))
+    TCPServerSocket.listen(1)
+    TCPServerthread = threading.Thread(target=TCPServerThread)
+    f.write("server overlay started at port " + overlayPort + "\n")
+    TCPServerthread.start()
+    if serverOverlayPort != -1:
+        TCPClientSocket.connect((serverOverlayIP, int(serverOverlayPort)))
 
 # if "o" parameter is null, it can't get connected to by TCP
 
@@ -72,7 +90,8 @@ while 1:
             print(cName, "registered from host", cAddress[0], "port", cAddress[1])
             UDPServerSocket.sendto(byteMsg, cAddress)
             f.write("client connection from host " + str(cAddress[0]) + " port " + str(cAddress[1]) + "\n")
-            f.write("received register " + cName + " from host " + str(cAddress[0]) + " port " + str(cAddress[1]) + "\n")
+            f.write(
+                "received register " + cName + " from host " + str(cAddress[0]) + " port " + str(cAddress[1]) + "\n")
             namePApair.insert(0, [cName, cAddress])  # registered client with its name and address associated
 
         elif cString[0] == "sendto":
@@ -87,7 +106,17 @@ while 1:
                     break
             if not check:
                 # todo: broadcast this message to all of the connected servers
+                for i in namePApair:
+                    if cAddress == i[1]:
+                        senderName = i[0]
 
+                cString.insert(0, senderName)
+                newString = ' '.join(cString)
+                bytetoSend = newString.encode()
+                # if serverOverlayPort == -1:  # this one is the one connected
+                #     connSocket.send(bytetoSend)  # send this string with sender's name at the beginning, byte version
+                # else:
+                #     TCPClientSocket.sendall(bytetoSend)
                 continue
 
             # getting the sender's name

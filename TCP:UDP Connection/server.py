@@ -243,9 +243,6 @@ while 1:
             for i in namePApair:
                 if cAddress == i[1]:
                     senderName = i[0]
-            if senderName == '':  # sender's name is not found - wouldn't be possible if the user has already registered
-                print("this sender is not yet registered (not possible)")
-                continue
 
             # obtaining the receiver's address
             receiverAddress = []

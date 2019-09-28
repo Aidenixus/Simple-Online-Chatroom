@@ -248,7 +248,7 @@ while 1:
             receiverAddress = []
             for i in namePApair:
                 if receiverName == i[0]:
-                    receiverAddress = i[1]  # this for loop is guaranteed to be successful of its search,
+                    receiverAddress = i[1]  # this for loop is guaranteed to be successful of its search
 
             cString.insert(2, senderName)
             cString.insert(2, "from")
